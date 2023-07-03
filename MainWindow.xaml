@@ -1,0 +1,75 @@
+﻿<Window x:Class="MineSweeper.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MineSweeper"
+        mc:Ignorable="d"
+        Title="MineSweeper" Height="450" Width="800"
+        FontSize="32" Icon="Assets/TileFlag.png"
+        RenderOptions.BitmapScalingMode="NearestNeighbor">
+    <Grid Background="#BBBBBB">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="100"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Border Background="#666666" Grid.Row="0">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Hidden">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" 
+                        VerticalAlignment="Center">
+                <StackPanel.Resources>
+                    <Style TargetType="Border" >
+                        <Setter Property="BorderBrush" Value="Black"/>
+                        <Setter Property="BorderThickness" Value="1"/>
+                        <Setter Property="Margin" Value="2"/>
+                    </Style>
+                </StackPanel.Resources>
+
+                <Border>
+                    <Button Width="80" Click="GenerateGrid">
+                        <TextBlock Text="Start"/>
+                    </Button>
+                </Border>
+
+                <Border>
+                    <StackPanel Orientation="Horizontal" x:Name="FlagsStack">
+
+                        <Image Source="Assets\TileFlag.png" Height="32"/>
+                        <TextBlock Text="NaN" Name="FlagsRemaining"/>
+                    </StackPanel>
+                </Border>
+                
+                <Border>
+                    <StackPanel Orientation="Horizontal" Name="BombsStack">
+                        <TextBlock Text="Bombs"/>
+                        <TextBox Text="8" Width="35" Name="BombsCount"/>
+                    </StackPanel>
+                </Border>
+                
+                <Border>
+                    <StackPanel Orientation="Horizontal" Name="RowsStack">
+                        <TextBlock Text="Rows"/>
+                        <TextBox Text="8" Width="35" Name="RowsCount"/>
+                    </StackPanel>
+                </Border>
+
+                <Border>
+                    <StackPanel Orientation="Horizontal" Name="ColumnStack">
+                        <TextBlock Text="Column"/>
+                        <TextBox Text="8" Width="35" Name="ColumnCount"/>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+            </ScrollViewer>
+        </Border>
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Grid.Row="1">
+            <UniformGrid Name="GameGrid" Background="#999999" Margin="20"
+                        MouseLeftButtonUp="ClickGameGrid" MouseRightButtonUp="PlaceFlag">
+
+            </UniformGrid>
+        </ScrollViewer>
+        
+    </Grid>
+</Window>
