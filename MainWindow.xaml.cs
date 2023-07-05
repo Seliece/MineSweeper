@@ -207,7 +207,7 @@ namespace MineSweeper
             }
 
             if (value == 0) {
-                ClearAdjacent(ClickedTile);
+                FloodFill(ClickedTile);
             }
 
 
@@ -238,16 +238,26 @@ namespace MineSweeper
                 MessageBox.Show("YOU WIN!!!");
             }
         }
-        private void ClearAdjacent(Point point) {
+        private void FloodFill(Point point) {
+            List<Point> newPoints = new List<Point>();
             for (int x = -1; x <= 1; x++) {
-                for (int y = -1; y <= 1; y++) {
+                for (int y  = -1; y <= 1; y++) {
                     try {
-                        GameGridExplored[(int)point.Y + x, (int)point.X + y] = true;
+                        if (GameGridValues[Convert.ToInt32(Math.Round(point.Y)) + x, Convert.ToInt32(point.X) + y] == 0 && GameGridExplored[Convert.ToInt32(Math.Round(point.Y)) + x, Convert.ToInt32(point.X) + y] == false) {
+                            newPoints.Add(new Point(point.X + y, point.Y + x));
+                        }
+                        if (GameGridExplored[Convert.ToInt32(Math.Round(point.Y)) + x, Convert.ToInt32(point.X) + y] == false) {
+                            GameGridExplored[Convert.ToInt32(Math.Round(point.Y)) + x, Convert.ToInt32(point.X) + y] = true;
+                        }
 
-                    } catch (Exception) { }
-                    DrawGrid();
+                        } catch (Exception) {
+                    }
                 }
             }
+            foreach (Point newPoint in newPoints) {
+                FloodFill(newPoint);
+            }
+            DrawGrid();
         }
     }
 }
