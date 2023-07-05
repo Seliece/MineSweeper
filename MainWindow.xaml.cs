@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlTypes;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -113,7 +114,14 @@ namespace MineSweeper
 
             Random random = new Random();
             for (int i = 0; i < bombs; i++) {
-                GameGridValues[random.Next(rows - 1), random.Next(columns - 1)] = 20;
+                int x = random.Next(rows);
+                int y = random.Next(columns);
+                if (GameGridValues[x,y] == 20) {
+                    i--;
+                } else {
+                    GameGridValues[x, y] = 20;
+                }
+                
             }
         }
 
