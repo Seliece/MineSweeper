@@ -26,12 +26,14 @@ namespace MineSweeper
 
         #region values
         int size = 32;
-        public static int rows, columns, bombs, bombsRemaining;
-        public static int[,] GameGridValues;
-        public static bool?[,] GameGridExplored;
+        public int rows, columns, bombs, bombsRemaining;
+        public GridCell[,] gridCells;
+        public int[,] GameGridValues;
+        public bool?[,] GameGridExplored;
 
         enum TileValues
         {
+            TileEmpty = 0,
             Tile1 = 1,
             Tile2 = 2,
             Tile3 = 3,
@@ -40,38 +42,13 @@ namespace MineSweeper
             Tile6 = 6,
             Tile7 = 7,
             Tile8 = 8,
-            TileEmpty = 0,
-            TileFlag = 10,
             TileMine = 20,
-            TileExploded = 30
         }
         #endregion
 
         public MainWindow() {
             InitializeComponent();
             GenerateGrid();
-        }
-
-        private void DrawGrid() {
-            GameGrid.Children.Clear();
-            for (int r = 0; r < rows; r++) {
-                for (int c = 0; c < columns; c++) {
-
-                    if (GameGridExplored[r, c] == true) {
-                        BitmapImage bitmapImage = new BitmapImage(new Uri($"Assets/{(TileValues)GameGridValues[r, c]}.png", UriKind.Relative));
-                        Image img = new Image {
-                            Source = bitmapImage
-                        };
-                        GameGrid.Children.Add(img);
-                    } else if (GameGridExplored[r, c] == false) {
-                        GameGrid.Children.Add(new Image { Source = new BitmapImage(new Uri("Assets/TileUnknown.png", UriKind.Relative)) });
-                    } else if (GameGridExplored[r, c] == null) {
-                        GameGrid.Children.Add(new Image { Source = new BitmapImage(new Uri("Assets/TileFlag.png", UriKind.Relative)) });
-                    }
-
-
-                }
-            }
         }
 
         #region Generation
@@ -106,10 +83,12 @@ namespace MineSweeper
         private void GenerateGameGrid() {
             GameGridValues = new int[rows, columns];
             GameGridExplored = new bool?[rows, columns];
+            gridCells = new GridCell[rows, columns];
 
             for (int r = 0; r < rows; r++) {
                 for (int c = 0; c < columns; c++) {
-                    GameGridExplored[r, c] = false;
+                    gridCells[r, c] = new GridCell();
+                    gridCells[r, c].explored = false;
                 }
             }
         }
@@ -120,11 +99,12 @@ namespace MineSweeper
             for (int i = 0; i < bombs; i++) {
                 int x = random.Next(rows);
                 int y = random.Next(columns);
-                if (GameGridValues[x, y] == 20) {
+
+                if (gridCells[x, y].value == 20) {
                     i--;
-                } else {
-                    GameGridValues[x, y] = 20;
+                    continue;
                 }
+                gridCells[x, y].value = 20;
 
             }
         }
@@ -133,70 +113,87 @@ namespace MineSweeper
             for (int r = 0; r < rows; r++) {
                 for (int c = 0; c < columns; c++) {
 
-                    if (GameGridValues[r, c] == 20) {
+                    if (gridCells[r, c].value == 20) {
                         continue;
                     }
                     int bombCount = 0;
 
                     try {
-                        bombCount += GameGridValues[r - 1, c - 1] == 20 ? 1 : 0;
+                        bombCount += gridCells[r - 1, c - 1].value == 20 ? 1 : 0;
                     } catch (Exception) { }
                     try {
-                        bombCount += GameGridValues[r - 1, c] == 20 ? 1 : 0;
+                        bombCount += gridCells[r - 1, c].value == 20 ? 1 : 0;
                     } catch (Exception) { }
                     try {
-                        bombCount += GameGridValues[r - 1, c + 1] == 20 ? 1 : 0;
+                        bombCount += gridCells[r - 1, c + 1].value == 20 ? 1 : 0;
                     } catch (Exception) { }
                     try {
-                        bombCount += GameGridValues[r, c - 1] == 20 ? 1 : 0;
+                        bombCount += gridCells[r, c - 1].value == 20 ? 1 : 0;
                     } catch (Exception) { }
                     try {
-                        bombCount += GameGridValues[r, c + 1] == 20 ? 1 : 0;
+                        bombCount += gridCells[r, c + 1].value == 20 ? 1 : 0;
                     } catch (Exception) { }
                     try {
-                        bombCount += GameGridValues[r + 1, c - 1] == 20 ? 1 : 0;
+                        bombCount += gridCells[r + 1, c - 1].value == 20 ? 1 : 0;
                     } catch (Exception) { }
                     try {
-                        bombCount += GameGridValues[r + 1, c] == 20 ? 1 : 0;
+                        bombCount += gridCells[r + 1, c].value == 20 ? 1 : 0;
                     } catch (Exception) { }
                     try {
-                        bombCount += GameGridValues[r + 1, c + 1] == 20 ? 1 : 0;
+                        bombCount += gridCells[r + 1, c + 1].value == 20 ? 1 : 0;
                     } catch (Exception) { }
 
-                    GameGridValues[r, c] = bombCount;
+                    gridCells[r, c].value = bombCount;
 
                 }
             }
         }
         #endregion
+        private void DrawGrid() {
+            GameGrid.Children.Clear();
+            string adress = "";
+            for (int r = 0; r < rows; r++) {
+                for (int c = 0; c < columns; c++) {
+
+                    if (gridCells[r, c].flagged == true) {
+                        adress = "Assets/TileFlag.png";
+                    } else if (gridCells[r, c].explored == false) {
+                        adress = "Assets/TileUnknown.png";
+                    } else if (gridCells[r, c].explored == true) {
+                        adress = $"Assets/{(TileValues)gridCells[r, c].value}.png";
+                    }
+                    BitmapImage image = new BitmapImage(new Uri(adress,UriKind.Relative));
+                    GameGrid.Children.Add(new Image { Source = image});
+
+
+                }
+            }
+        }
+
 
         #region Clicking
         private void PlaceFlag(object sender, MouseButtonEventArgs e) {
             Point Clickpos = e.GetPosition(GameGrid);
+            int xPos = (int)Math.Floor(Clickpos.X / size);
+            int yPos = (int)Math.Floor(Clickpos.Y / size);
 
-            Point ClickedTile = new Point(Math.Floor(Clickpos.X / size), Math.Floor(Clickpos.Y / size));
+            if (gridCells[yPos, xPos].explored == true) {
+                return;
+            }
 
-            if (GameGridExplored[(int)ClickedTile.Y, (int)ClickedTile.X] == null) {
+
+            if (gridCells[yPos, xPos].flagged == true) {
                 bombsRemaining++;
                 FlagsRemaining.Text = bombsRemaining.ToString();
-                GameGridExplored[(int)ClickedTile.Y, (int)ClickedTile.X] = false;
-                DrawGrid();
-                return;
+                gridCells[yPos, xPos].flagged = false;
+            } else if (gridCells[yPos, xPos].flagged == false) {
+                bombsRemaining--;
+                FlagsRemaining.Text = bombsRemaining.ToString();
+
+                gridCells[yPos, xPos].flagged = true;
             }
-
-            if (GameGridExplored[(int)ClickedTile.Y, (int)ClickedTile.X] == true) {
-                return;
-            }
-
-            bombsRemaining--;
-            FlagsRemaining.Text = bombsRemaining.ToString();
-
-            GameGridExplored[(int)ClickedTile.Y, (int)ClickedTile.X] = null;
+            CheckIfWon();
             DrawGrid();
-
-            if (GameGridExplored.Cast<bool?>().All(b => b == true)) {
-                MessageBox.Show("YOU WIN!!!");
-            }
         }
 
         private void ClickGameGrid(object sender, MouseEventArgs e) {
@@ -204,10 +201,10 @@ namespace MineSweeper
             Point Clickpos = e.GetPosition(GameGrid);
             Point ClickedTile = new Point(Math.Floor(Clickpos.X / size), Math.Floor(Clickpos.Y / size));
 
-            int value = GameGridValues[(int)ClickedTile.Y, (int)ClickedTile.X];
-            bool? explored = GameGridExplored[(int)ClickedTile.Y, (int)ClickedTile.X];
+            int value = gridCells[(int)ClickedTile.Y, (int)ClickedTile.X].value;
+            bool explored = gridCells[(int)ClickedTile.Y, (int)ClickedTile.X].explored;
 
-            GameGridExplored[(int)ClickedTile.Y, (int)ClickedTile.X] = true;
+            gridCells[(int)ClickedTile.Y, (int)ClickedTile.X].explored = true;
 
             switch (value) {
 
@@ -299,7 +296,7 @@ namespace MineSweeper
 
         #region checks
         private void CheckIfWon() {
-            if (GameGridExplored.Cast<bool?>().Count(b => b == false) - bombsRemaining == 0) {
+            if (gridCells.Cast<GridCell>().Count(b => b.flagged == true) - bombs == 0) {
                 MessageBox.Show("YOU WIN!!!");
             }
         }
