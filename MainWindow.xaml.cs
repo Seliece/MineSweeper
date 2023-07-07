@@ -25,11 +25,9 @@ namespace MineSweeper
     {
 
         #region values
-        int size = 32;
+        readonly int size = 32;
         public int rows, columns, bombs, bombsRemaining;
         public GridCell[,] gridCells;
-        public int[,] GameGridValues;
-        public bool?[,] GameGridExplored;
 
         enum TileValues
         {
@@ -81,14 +79,13 @@ namespace MineSweeper
         }
 
         private void GenerateGameGrid() {
-            GameGridValues = new int[rows, columns];
-            GameGridExplored = new bool?[rows, columns];
             gridCells = new GridCell[rows, columns];
 
             for (int r = 0; r < rows; r++) {
                 for (int c = 0; c < columns; c++) {
-                    gridCells[r, c] = new GridCell();
-                    gridCells[r, c].explored = false;
+                    gridCells[r, c] = new GridCell {
+                        explored = false
+                    };
                 }
             }
         }
@@ -192,24 +189,24 @@ namespace MineSweeper
 
                 gridCells[yPos, xPos].flagged = true;
             }
-            CheckIfWon();
             DrawGrid();
+            CheckIfWon();
         }
 
         private void ClickGameGrid(object sender, MouseEventArgs e) {
 
             Point Clickpos = e.GetPosition(GameGrid);
-            Point ClickedTile = new Point(Math.Floor(Clickpos.X / size), Math.Floor(Clickpos.Y / size));
+            int[] clickedTile = new int[2] { (int)Math.Floor(Clickpos.Y / size), (int)Math.Floor(Clickpos.X / size) };
 
-            int value = gridCells[(int)ClickedTile.Y, (int)ClickedTile.X].value;
-            bool explored = gridCells[(int)ClickedTile.Y, (int)ClickedTile.X].explored;
+            int value = gridCells[clickedTile[0], clickedTile[1]].value;
+            bool explored = gridCells[clickedTile[0], clickedTile[1]].explored;
 
-            gridCells[(int)ClickedTile.Y, (int)ClickedTile.X].explored = true;
+            gridCells[clickedTile[0], clickedTile[1]].explored = true;
 
             switch (value) {
 
                 case 0:
-                    FloodFill(ClickedTile);
+                    FloodFill(clickedTile);
                     return;
 
                 case 1:
@@ -220,7 +217,7 @@ namespace MineSweeper
                 case 6:
                 case 7:
                 case 8:
-                    RevealNumbers(ClickedTile, value, explored);
+                    RevealNumbers(clickedTile, value, explored);
                     DrawGrid();
                     return;
 
@@ -231,44 +228,44 @@ namespace MineSweeper
         }
         #endregion
 
-        private void FloodFill(Point point) {
-            List<Point> newPoints = new List<Point>();
+        private void FloodFill(int[] point) {
+            List<int[]> newPoints = new List<int[]>();
             for (int x = -1; x <= 1; x++) {
                 for (int y = -1; y <= 1; y++) {
                     try {
-                        if (GameGridValues[Convert.ToInt32(Math.Round(point.Y)) + x, Convert.ToInt32(point.X) + y] == 0 && GameGridExplored[Convert.ToInt32(Math.Round(point.Y)) + x, Convert.ToInt32(point.X) + y] == false) {
-                            newPoints.Add(new Point(point.X + y, point.Y + x));
+                        if (gridCells[point[0] + x, point[1] + y].value == 0 && gridCells[point[0] + x, point[1] + y].explored == false) {
+                            newPoints.Add(new int[2] { point[0] + x, point[1] + y });
                         }
-                        if (GameGridExplored[Convert.ToInt32(Math.Round(point.Y)) + x, Convert.ToInt32(point.X) + y] == false) {
-                            GameGridExplored[Convert.ToInt32(Math.Round(point.Y)) + x, Convert.ToInt32(point.X) + y] = true;
+                        if (gridCells[point[0] + x, point[1] + y].explored == false) {
+                            gridCells[point[0] + x, point[1] + y].explored = true;
                         }
 
                     } catch (Exception) {
                     }
                 }
             }
-            foreach (Point newPoint in newPoints) {
+            foreach (int[] newPoint in newPoints) {
                 FloodFill(newPoint);
             }
             DrawGrid();
             CheckIfWon();
         }
 
-        private void RevealNumbers(Point clickedTile, int value, bool? explored) {
+        private void RevealNumbers(int[] clickedTile, int value, bool explored) {
             if (explored == true) {
                 FlagRevealMethod(clickedTile, value);
             } else if (explored == false) {
-                GameGridExplored[(int)Math.Round(clickedTile.Y), (int)Math.Round(clickedTile.X)] = true;
+                gridCells[clickedTile[0], clickedTile[1]].explored = true;
             }
             DrawGrid();
         }
 
-        private void FlagRevealMethod(Point clickedTile, int value) {
+        private void FlagRevealMethod(int[] clickedTile, int value) {
             int flagCount = 0;
             for (int x = -1; x <= 1; x++) {
                 for (int y = -1; y <= 1; y++) {
                     try {
-                        if (GameGridExplored[(int)Math.Round(clickedTile.Y + y), (int)Math.Round(clickedTile.X + x)] == null) {
+                        if (gridCells[clickedTile[0] + x, clickedTile[1] + y].flagged == true) {
                             flagCount++;
                         }
                     } catch (Exception) { }
@@ -279,12 +276,12 @@ namespace MineSweeper
                     for (int y = -1; y <= 1; y++) {
                         try {
                             
-                            if (GameGridExplored[(int)Math.Round(clickedTile.Y + y), (int)Math.Round(clickedTile.X + x)] != null) {
-                                if (GameGridValues[(int)Math.Round(clickedTile.Y + y), (int)Math.Round(clickedTile.X + x)] == 20) {
+                            if (gridCells[clickedTile[0] + x, clickedTile[1] + y].flagged == false) {
+                                if (gridCells[clickedTile[0] + x, clickedTile[1] + y].value == 20) {
                                     YouLose();
                                     return;
                                 }
-                                GameGridExplored[(int)Math.Round(clickedTile.Y + y), (int)Math.Round(clickedTile.X + x)] = true;
+                                gridCells[clickedTile[0] + x, clickedTile[1] + y].explored = true;
                             }
                         } catch (Exception) { }
                     }
@@ -296,7 +293,7 @@ namespace MineSweeper
 
         #region checks
         private void CheckIfWon() {
-            if (gridCells.Cast<GridCell>().Count(b => b.flagged == true) - bombs == 0) {
+            if (gridCells.Cast<GridCell>().Count(b => b.flagged) - bombs == 0) {
                 MessageBox.Show("YOU WIN!!!");
             }
         }
@@ -304,7 +301,7 @@ namespace MineSweeper
             
             for (int r = 0; r < rows; r++) {
                 for (int c = 0; c < columns; c++) {
-                    GameGridExplored[r, c] = true;
+                    gridCells[r, c].explored = true;
                 }
             }
 
